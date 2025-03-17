@@ -198,10 +198,6 @@ if __name__ == "__main__":
 
 # Suppose these lists have been populated during training:
 epochs = list(range(1, 21))  # Epochs 1 to 20
-# train_losses = [0.85, 0.80, 0.78, 0.75, 0.73, 0.70, 0.68, 0.67, 0.65, 0.64, 
-#                 0.63, 0.62, 0.61, 0.60, 0.59, 0.58, 0.57, 0.56, 0.56, 0.55]
-# dev_accuracies = [52.0, 53.5, 54.1, 54.7, 55.0, 55.3, 55.6, 55.8, 56.0, 56.2, 
-#                   56.4, 56.5, 56.6, 56.6, 56.5, 56.4, 56.4, 56.4, 56.3, 56.3]
 
 # Create a plot with dual y-axes
 fig, ax1 = plt.subplots(figsize=(10, 5))
