@@ -31,13 +31,13 @@ class RNN(nn.Module):
 
     def forward(self, inputs):
         # [to fill] obtain hidden layer representation (https://pytorch.org/docs/stable/generated/torch.nn.RNN.html)
-        _, hidden = 
+        _, hidden = self.rnn(inputs)
         # [to fill] obtain output layer representations
-
+        output_layer = self.W(hidden)
         # [to fill] sum over output 
-
+        summed_outputs = torch.sum(output_layer, dim=1)
         # [to fill] obtain probability dist.
-
+        predicted_vector = self.softmax(summed_outputs)
         return predicted_vector
 
 
@@ -173,10 +173,7 @@ if __name__ == "__main__":
         else:
             last_validation_accuracy = validation_accuracy
             last_train_accuracy = trainning_accuracy
-
         epoch += 1
-
-
 
     # You may find it beneficial to keep track of training accuracy or training loss;
 

@@ -10,6 +10,7 @@ import time
 from tqdm import tqdm
 import json
 from argparse import ArgumentParser
+import matplotlib.pyplot as plt
 
 
 unk = '<UNK>'
@@ -31,12 +32,13 @@ class FFNN(nn.Module):
         return self.loss(predicted_vector, gold_label)
 
     def forward(self, input_vector):
+        self.dropout = nn.Dropout(p=0.5)
         # [to fill] obtain first hidden layer representation
-
+        h = self.dropout(self.activation(self.W1(input_vector)))
         # [to fill] obtain output layer representation
-
+        z = self.W2(h)
         # [to fill] obtain probability dist.
-
+        predicted_vector = self.softmax(z)
         return predicted_vector
 
 
@@ -95,7 +97,8 @@ def load_data(train_data, val_data):
 
     return tra, val
 
-
+train_losses = []
+dev_accuracies = []
 if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument("-hd", "--hidden_dim", type=int, required = True, help = "hidden_dim")
@@ -122,8 +125,9 @@ if __name__ == "__main__":
     
 
     model = FFNN(input_dim = len(vocab), h = args.hidden_dim)
-    optimizer = optim.SGD(model.parameters(),lr=0.01, momentum=0.9)
+    optimizer = optim.SGD(model.parameters(),lr=0.01, momentum=0.9, weight_decay=1e-4)
     print("========== Training for {} epochs ==========".format(args.epochs))
+    
     for epoch in range(args.epochs):
         model.train()
         optimizer.zero_grad()
@@ -134,7 +138,9 @@ if __name__ == "__main__":
         print("Training started for epoch {}".format(epoch + 1))
         random.shuffle(train_data) # Good practice to shuffle order of training data
         minibatch_size = 16 
-        N = len(train_data) 
+        N = len(train_data)
+        epoch_loss = 0.0
+        loss_count = 0
         for minibatch_index in tqdm(range(N // minibatch_size)):
             optimizer.zero_grad()
             loss = None
@@ -152,6 +158,11 @@ if __name__ == "__main__":
             loss = loss / minibatch_size
             loss.backward()
             optimizer.step()
+            epoch_loss += loss.item()
+            loss_count += 1
+        avg_epoch_loss = epoch_loss / loss_count
+        train_losses.append(avg_epoch_loss)
+        print("Average loss for epoch {}: {}".format(epoch + 1, avg_epoch_loss))
         print("Training completed for epoch {}".format(epoch + 1))
         print("Training accuracy for epoch {}: {}".format(epoch + 1, correct / total))
         print("Training time for this epoch: {}".format(time.time() - start_time))
@@ -179,9 +190,36 @@ if __name__ == "__main__":
                 else:
                     loss += example_loss
             loss = loss / minibatch_size
+        dev_accuracies.append(correct / total)
         print("Validation completed for epoch {}".format(epoch + 1))
         print("Validation accuracy for epoch {}: {}".format(epoch + 1, correct / total))
         print("Validation time for this epoch: {}".format(time.time() - start_time))
 
-    # write out to results/test.out
-    
+
+# Suppose these lists have been populated during training:
+epochs = list(range(1, 21))  # Epochs 1 to 20
+# train_losses = [0.85, 0.80, 0.78, 0.75, 0.73, 0.70, 0.68, 0.67, 0.65, 0.64, 
+#                 0.63, 0.62, 0.61, 0.60, 0.59, 0.58, 0.57, 0.56, 0.56, 0.55]
+# dev_accuracies = [52.0, 53.5, 54.1, 54.7, 55.0, 55.3, 55.6, 55.8, 56.0, 56.2, 
+#                   56.4, 56.5, 56.6, 56.6, 56.5, 56.4, 56.4, 56.4, 56.3, 56.3]
+
+# Create a plot with dual y-axes
+fig, ax1 = plt.subplots(figsize=(10, 5))
+
+# Plot training loss on the left y-axis
+color = 'tab:blue'
+ax1.set_xlabel('Epoch')
+ax1.set_ylabel('Training Loss', color=color)
+ax1.plot(epochs, train_losses, marker='o', color=color, label='Training Loss')
+ax1.tick_params(axis='y', labelcolor=color)
+
+# Plot development accuracy on the right y-axis
+ax2 = ax1.twinx()
+color = 'tab:green'
+ax2.set_ylabel('Development Accuracy (%)', color=color)
+ax2.plot(epochs, dev_accuracies, marker='o', color=color, label='Dev Accuracy')
+ax2.tick_params(axis='y', labelcolor=color)
+
+plt.title('Learning Curve: Training Loss and Development Accuracy')
+fig.tight_layout()
+plt.show()
